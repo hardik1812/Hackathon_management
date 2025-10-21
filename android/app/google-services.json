@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "178937059279",
+    "project_id": "test-management-af678",
+    "storage_bucket": "test-management-af678.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:178937059279:android:b723739a0d91f0ffc424ba",
+        "android_client_info": {
+          "package_name": "com.example.manager_hackathon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBukd0ufQFEB-Ogmp5kTGXkCvqurLtO2EU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
