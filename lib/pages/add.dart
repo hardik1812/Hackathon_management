@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:manager_hackathon/pages/qrcodesender.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 // A simple data class to hold the information for each person.
@@ -155,8 +157,17 @@ class _AddDataState extends State<AddData> {
                         'createdAt': FieldValue.serverTimestamp(),
                         });
 
-                        // Save each member in a subcollection
+                        
                         for (var member in _teamMembers) {
+                          // Check if email exists in any team
+                          var querySnapshot = await FirebaseFirestore.instance
+                            .collectionGroup('members')
+                            .where('email', isEqualTo: member.emailController.text)
+                            .get();
+                          
+                          if (querySnapshot.docs.isNotEmpty) {
+                          Fluttertoast.showToast(msg: 'Email ${member.emailController.text} is already registered in another team') ;
+                          }else{
                         await teamDoc.collection('members').doc(member.emailController.text).set({
                           'name': member.nameController.text,
                           'number': member.numberController.text,
@@ -164,15 +175,10 @@ class _AddDataState extends State<AddData> {
                           'wantsRefreshments': member.wantsRefreshments,
                           'status':false
                         });
-                        }
+                        Fluttertoast.showToast(msg: 'Team saved');
+                        }}
 
                         // Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Team saved successfully!')),
-                        );
-                        for(var member in _teamMembers){
-                          qrcodes.add(PrettyQrView(qrImage: QrImage(QrCode.fromData(data: '{"name" : "${member.nameController.text}"}', errorCorrectLevel: QrErrorCorrectLevel.L))));
-                        }
                         
                         
                         
