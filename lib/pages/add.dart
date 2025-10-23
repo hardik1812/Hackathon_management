@@ -5,14 +5,11 @@ import 'package:pretty_qr_code/pretty_qr_code.dart';
 // A simple data class to hold the information for each person.
 class Person {
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController numberController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  bool wantsRefreshments = false;
 
   // A method to dispose of the controllers to prevent memory leaks.
   void dispose() {
     nameController.dispose();
-    numberController.dispose();
     emailController.dispose();
   }
 }
@@ -159,10 +156,9 @@ class _AddDataState extends State<AddData> {
                         for (var member in _teamMembers) {
                         await teamDoc.collection('members').doc(member.emailController.text).set({
                           'name': member.nameController.text,
-                          'number': member.numberController.text,
                           'email': member.emailController.text,
-                          'wantsRefreshments': member.wantsRefreshments,
-                          'status':false
+                          'status':false,
+                          'refreshmentsClaimed': false
                         });
                         }
 
@@ -255,14 +251,6 @@ class _MemberInputCardState extends State<MemberInputCard> {
             ),
             const SizedBox(height: 8),
             TextFormField(
-              controller: widget.person.numberController,
-              decoration: const InputDecoration(labelText: 'Number'),
-              keyboardType: TextInputType.phone,
-              validator: (value) =>
-                  value!.isEmpty ? 'Please enter a number' : null,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
               controller: widget.person.emailController,
               decoration: const InputDecoration(labelText: 'Email'),
               keyboardType: TextInputType.emailAddress,
@@ -273,18 +261,6 @@ class _MemberInputCardState extends State<MemberInputCard> {
                 }
                 return null;
               },
-            ),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              title: const Text('Opted for Refreshments'),
-              value: widget.person.wantsRefreshments,
-              onChanged: (bool value) {
-                setState(() {
-                  widget.person.wantsRefreshments = value;
-                });
-              },
-              activeColor: Colors.deepPurple,
-              contentPadding: EdgeInsets.zero,
             ),
           ],
         ),
