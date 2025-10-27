@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:manager_hackathon/pages/add.dart';
 import 'package:manager_hackathon/pages/info.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:manager_hackathon/pages/info2.dart';
 
 
 
@@ -76,7 +78,55 @@ class homeapp extends StatelessWidget {
                      context,
                      MaterialPageRoute(builder: (context) => AddData()),
                      );
-                  }, child: Text("Add data")),
+                  }, child: Text("Add Team")),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AiBarcodeScanner(
+                              overlayConfig: ScannerOverlayConfig(
+                                borderColor: Colors.blue,
+                                scannerAnimation: ScannerAnimation.center
+                              ),
+                              galleryIcon: Icons.photo,
+                              cameraSwitchIcon: Icons.switch_camera_outlined,
+                              flashOffIcon: Icons.flash_on,
+                              
+                              onDetect: (BarcodeCapture capture) async{
+                                if (capture.barcodes.isNotEmpty) {
+                                  final String? code = capture.barcodes.first.rawValue;
+                                  if (code != null) {
+                                    // Pop the scanner screen
+                                    Navigator.of(context).pop();
+                                    try{
+                                    final code2=jsonDecode(code);
+                                     await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => view2(input: code2)),
+                                    );
+                                    }catch(e){
+                                      await Navigator.push(
+                                       context,
+                                       MaterialPageRoute(builder: (context) => homeapp()),
+                                       );
+                                      Fluttertoast.showToast(msg: 'Invalid Qr');
+              
+                                    }
+                                   
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('Refreshments Qr', textAlign: TextAlign.center),
+                    ),
                   ),
                   
                 ],

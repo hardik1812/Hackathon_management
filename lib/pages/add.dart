@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:manager_hackathon/pages/qrcodesender.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 // A simple data class to hold the information for each person.
 class Person {
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController numberController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  bool wantsRefreshments = false;
 
-  // A method to dispose of the controllers to prevent memory leaks.
   void dispose() {
     nameController.dispose();
-    numberController.dispose();
     emailController.dispose();
   }
 }
@@ -35,20 +29,16 @@ class _AddDataState extends State<AddData> {
   @override
   void initState() {
     super.initState();
-    // Start with one member entry by default.
     _addMember();
   }
 
-  // Function to add a new person to the list.
   void _addMember() {
     setState(() {
       _teamMembers.add(Person());
     });
   }
 
-  // Function to remove a person from the list.
   void _removeMember(int index) {
-    // Dispose controllers before removing to avoid memory leaks
     _teamMembers[index].dispose();
     setState(() {
       _teamMembers.removeAt(index);
@@ -57,13 +47,20 @@ class _AddDataState extends State<AddData> {
 
   @override
   void dispose() {
-    // Dispose of the team name controller.
     _teamNameController.dispose();
-    // Dispose of all controllers in the team members list.
     for (var member in _teamMembers) {
       member.dispose();
     }
     super.dispose();
+  }
+
+  // New function to check if email exists
+  Future<bool> _emailExists(String email) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collectionGroup('members')
+        .where('email', isEqualTo: email)
+        .get();
+    return querySnapshot.docs.isNotEmpty;
   }
 
   @override
@@ -82,7 +79,6 @@ class _AddDataState extends State<AddData> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Team Name Text Field
                 TextFormField(
                   controller: _teamNameController,
                   decoration: const InputDecoration(
@@ -90,15 +86,10 @@ class _AddDataState extends State<AddData> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.group),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a team name';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      value?.isEmpty ?? true ? 'Please enter a team name' : null,
                 ),
                 const SizedBox(height: 24),
-                // Header for the members list
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -109,7 +100,6 @@ class _AddDataState extends State<AddData> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    // Add member button
                     IconButton.filled(
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
@@ -120,16 +110,14 @@ class _AddDataState extends State<AddData> {
                     ),
                   ],
                 ),
-                
                 const Divider(height: 20),
-                // List of Team Members
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _teamMembers.length,
                   itemBuilder: (context, index) {
                     return MemberInputCard(
-                      key: ValueKey(index), // Important for list state management
+                      key: ValueKey(index),
                       person: _teamMembers[index],
                       onRemove: () => _removeMember(index),
                       isRemoveButtonEnabled: _teamMembers.length > 1,
@@ -137,60 +125,56 @@ class _AddDataState extends State<AddData> {
                   },
                 ),
                 const SizedBox(height: 30),
-                // Submit Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                      try {
-                        // Get Firestore instance
-                        final firestore = FirebaseFirestore.instance;
-                        
-                        // Create a new team document with team name as the ID
-                        final teamDoc = firestore.collection('teams').doc(_teamNameController.text);
-                        
-                        // Save team data
-                        await teamDoc.set({
-                        'teamName': _teamNameController.text,
-                        'memberCount': _teamMembers.length,
-                        'createdAt': FieldValue.serverTimestamp(),
-                        });
+                        try {
+                          // Check for duplicate emails
+                          for (var member in _teamMembers) {
+                            if (await _emailExists(member.emailController.text)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Email ${member.emailController.text} is already registered')),
+                              );
+                              return;
+                            }
+                          }
 
-                        
-                        for (var member in _teamMembers) {
-                          // Check if email exists in any team
-                          var querySnapshot = await FirebaseFirestore.instance
-                            .collectionGroup('members')
-                            .where('email', isEqualTo: member.emailController.text)
-                            .get();
+                          final firestore = FirebaseFirestore.instance;
+                          final teamDoc = firestore.collection('teams').doc(_teamNameController.text);
                           
-                          if (querySnapshot.docs.isNotEmpty) {
-                          Fluttertoast.showToast(msg: 'Email ${member.emailController.text} is already registered in another team') ;
-                          }else{
-                        await teamDoc.collection('members').doc(member.emailController.text).set({
-                          'name': member.nameController.text,
-                          'number': member.numberController.text,
-                          'email': member.emailController.text,
-                          'wantsRefreshments': member.wantsRefreshments,
-                          'status':false
-                        });
-                        Fluttertoast.showToast(msg: 'Team saved');
-                        }}
+                          await teamDoc.set({
+                            'teamName': _teamNameController.text,
+                            'memberCount': _teamMembers.length,
+                            'createdAt': FieldValue.serverTimestamp(),
+                          });
 
-                        // Show success message
-                        
-                        
-                        
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error saving team: $e')),
-                        );
+                          for (var member in _teamMembers) {
+                            await teamDoc.collection('members').doc(member.emailController.text).set({
+                              'name': member.nameController.text,
+                              'email': member.emailController.text,
+                              'status': false,
+                              'refreshmentsClaimed': true
+                            });
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Team saved successfully!')),
+                          );
+                          
+                          for(var member in _teamMembers){
+                            qrcodes.add(PrettyQrView(qrImage: QrImage(QrCode.fromData(
+                              data: '{"name" : "${member.nameController.text}"}',
+                              errorCorrectLevel: QrErrorCorrectLevel.L
+                            ))));
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error saving team: $e')),
+                          );
+                        }
                       }
-                      }
-
-                      
-
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -261,14 +245,6 @@ class _MemberInputCardState extends State<MemberInputCard> {
             ),
             const SizedBox(height: 8),
             TextFormField(
-              controller: widget.person.numberController,
-              decoration: const InputDecoration(labelText: 'Number'),
-              keyboardType: TextInputType.phone,
-              validator: (value) =>
-                  value!.isEmpty ? 'Please enter a number' : null,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
               controller: widget.person.emailController,
               decoration: const InputDecoration(labelText: 'Email'),
               keyboardType: TextInputType.emailAddress,
@@ -279,18 +255,6 @@ class _MemberInputCardState extends State<MemberInputCard> {
                 }
                 return null;
               },
-            ),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              title: const Text('Opted for Refreshments'),
-              value: widget.person.wantsRefreshments,
-              onChanged: (bool value) {
-                setState(() {
-                  widget.person.wantsRefreshments = value;
-                });
-              },
-              activeColor: Colors.deepPurple,
-              contentPadding: EdgeInsets.zero,
             ),
           ],
         ),

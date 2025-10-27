@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "178937059279",
-    "project_id": "test-management-af678",
-    "storage_bucket": "test-management-af678.firebasestorage.app"
+    "project_number": "1033979907283",
+    "project_id": "hackathon-management-2bc77",
+    "storage_bucket": "hackathon-management-2bc77.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:178937059279:android:b723739a0d91f0ffc424ba",
+        "mobilesdk_app_id": "1:1033979907283:android:276602d3414ff834b81826",
         "android_client_info": {
           "package_name": "com.example.manager_hackathon"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBukd0ufQFEB-Ogmp5kTGXkCvqurLtO2EU"
+          "current_key": "AIzaSyBG_5YS05j2JE58UfUV843FyEm2fSRDlu8"
         }
       ],
       "services": {

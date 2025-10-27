@@ -4,12 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:manager_hackathon/home.dart';
 
-class view extends StatelessWidget {
+class view2 extends StatelessWidget {
   final dynamic input;
 
-  view({super.key, required this.input});
+  view2({super.key, required this.input});
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +56,13 @@ class view extends StatelessWidget {
                             for (var doc in querySnapshot.docs) {
                               // Update the 'status' field to 'active'
                               // You can change 'active' to whatever status you need
-                              batch.update(doc.reference, {'status': true});
+                                final data = doc.data() as Map<String, dynamic>;
+                                final wants = data['refreshmentsClaimed'];
+                                if (wants == false) {
+                                Fluttertoast.showToast(msg: 'Refreshments not available');
+                                } else {
+                                batch.update(doc.reference, {'refreshmentsClaimed': false});
+                                }
                             }
                       
                             // Commit all the changes in the batch
@@ -65,19 +70,14 @@ class view extends StatelessWidget {
                       
                             Fluttertoast.showToast(
                                 msg:
-                                    'Updated status for ${querySnapshot.docs.length}.');
+                                    'Updated status for ${querySnapshot.docs.length} membership(s).');
                           } catch (e) {
                             Fluttertoast.showToast(msg: 'Error updating status: $e');
                           }
-                          Navigator.pushReplacement(
-                           context,
-                           MaterialPageRoute(builder: (context) => homeapp()),
-                           );
                         },
-                        child: Text('Change status', textAlign: TextAlign.center),
+                        child: Text('Change Refreshment status', textAlign: TextAlign.center,),
                       ),
                     ),
-                    
                   ],
                 ),
               ),
